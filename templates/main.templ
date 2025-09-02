@@ -1,0 +1,250 @@
+package templates
+
+import "strconv"
+
+
+// Layout template
+templ Layout(title string) {
+	<!DOCTYPE html>
+	<html lang="en" class="dark">
+		<head>
+			<meta charset="UTF-8"/>
+			<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+			<title>{ title }</title>
+			<script src="https://cdn.tailwindcss.com"></script>
+			<script src="https://unpkg.com/htmx.org@1.9.12"></script>
+			<script src="https://unpkg.com/htmx.org@1.9.12/dist/ext/ws.js"></script>
+			<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css"/>
+			<script>
+				tailwind.config = {
+					darkMode: 'class',
+					theme: {
+						extend: {
+							colors: {
+								primary: '#3b82f6',
+								secondary: '#1e293b',
+								accent: '#10b981'
+							}
+						}
+					}
+				}
+			</script>
+		</head>
+		<body class="bg-gray-900 text-white min-h-screen">
+			{ children... }
+		</body>
+	</html>
+}
+
+// Main page template
+templ Index() {
+	@Layout("System Monitor") {
+		<div class="container mx-auto px-4 py-8">
+			<div class="max-w-7xl mx-auto">
+				<!-- Header -->
+				<div class="flex items-center justify-between mb-8">
+					<h1 class="text-4xl font-bold text-white flex items-center gap-3">
+						<i class="fas fa-desktop text-primary"></i>
+						System Monitor
+					</h1>
+					<i class="fab fa-golang text-6xl text-blue-400"></i>
+				</div>
+				<!-- WebSocket Connection -->
+				<div hx-ext="ws" ws-connect="/ws" class="space-y-6">
+					<!-- Status -->
+					<div id="update-timestamp" class="bg-gray-800 rounded-lg p-4 border border-gray-700">
+						<div class="flex items-center gap-2 text-gray-400">
+							<i class="fas fa-clock"></i>
+							<span>Waiting for data...</span>
+						</div>
+					</div>
+					<!-- Monitor Grid -->
+					<div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+						<!-- Left Column -->
+						<div class="space-y-6">
+							<!-- System Info -->
+							<div class="bg-gray-800 rounded-lg border border-gray-700">
+								<div class="border-b border-gray-700 px-6 py-4">
+									<h2 class="text-xl font-semibold flex items-center gap-2">
+										<i class="fas fa-desktop text-primary"></i>
+										System Information
+									</h2>
+								</div>
+								<div id="system-data" class="p-6">
+									<div class="animate-pulse space-y-2">
+										<div class="h-4 bg-gray-700 rounded w-3/4"></div>
+										<div class="h-4 bg-gray-700 rounded w-1/2"></div>
+										<div class="h-4 bg-gray-700 rounded w-2/3"></div>
+									</div>
+								</div>
+							</div>
+							<!-- Disk Info -->
+							<div class="bg-gray-800 rounded-lg border border-gray-700">
+								<div class="border-b border-gray-700 px-6 py-4">
+									<h2 class="text-xl font-semibold flex items-center gap-2">
+										<i class="fas fa-hard-drive text-accent"></i>
+										Disk Usage
+									</h2>
+								</div>
+								<div id="disk-data" class="p-6">
+									<div class="animate-pulse space-y-2">
+										<div class="h-4 bg-gray-700 rounded w-3/4"></div>
+										<div class="h-4 bg-gray-700 rounded w-1/2"></div>
+										<div class="h-4 bg-gray-700 rounded w-2/3"></div>
+									</div>
+								</div>
+							</div>
+						</div>
+						<!-- Right Column -->
+						<div>
+							<!-- CPU Info -->
+							<div class="bg-gray-800 rounded-lg border border-gray-700">
+								<div class="border-b border-gray-700 px-6 py-4">
+									<h2 class="text-xl font-semibold flex items-center gap-2">
+										<i class="fas fa-microchip text-yellow-500"></i>
+										CPU Information
+									</h2>
+								</div>
+								<div id="cpu-data" class="p-6">
+									<div class="animate-pulse space-y-2">
+										<div class="h-4 bg-gray-700 rounded w-3/4"></div>
+										<div class="h-4 bg-gray-700 rounded w-1/2"></div>
+										<div class="h-4 bg-gray-700 rounded w-2/3"></div>
+									</div>
+								</div>
+							</div>
+						</div>
+					</div>
+				</div>
+				<!-- Footer -->
+				<div class="text-center text-gray-500 text-sm mt-12 pt-8 border-t border-gray-800">
+					Built using GOTTH Stack (Go + Templ + Tailwind + HTMX)
+				</div>
+			</div>
+		</div>
+	}
+}
+
+// System data component
+templ SystemData(os, platform, hostname string, procs uint64, totalMem, freeMem uint64, usedPercent float64) {
+	<div class="space-y-3">
+		<div class="flex justify-between items-center py-2 border-b border-gray-700">
+			<span class="text-gray-400 flex items-center gap-2">
+				<i class="fab fa-linux text-sm"></i>
+				Operating System:
+			</span>
+			<span class="text-white font-medium">{ os }</span>
+		</div>
+		<div class="flex justify-between items-center py-2 border-b border-gray-700">
+			<span class="text-gray-400 flex items-center gap-2">
+				<i class="fab fa-fedora text-sm"></i>
+				Platform:
+			</span>
+			<span class="text-white font-medium">{ platform }</span>
+		</div>
+		<div class="flex justify-between items-center py-2 border-b border-gray-700">
+			<span class="text-gray-400">Hostname:</span>
+			<span class="text-white font-medium">{ hostname }</span>
+		</div>
+		<div class="flex justify-between items-center py-2 border-b border-gray-700">
+			<span class="text-gray-400">Running Processes:</span>
+			<span class="text-white font-medium">{ strconv.FormatUint(procs, 10) }</span>
+		</div>
+		<div class="flex justify-between items-center py-2 border-b border-gray-700">
+			<span class="text-gray-400">Total Memory:</span>
+			<span class="text-white font-medium">{ strconv.FormatUint(totalMem, 10) } MB</span>
+		</div>
+		<div class="flex justify-between items-center py-2 border-b border-gray-700">
+			<span class="text-gray-400">Free Memory:</span>
+			<span class="text-white font-medium">{ strconv.FormatUint(freeMem, 10) } MB</span>
+		</div>
+		<div class="flex justify-between items-center py-2">
+			<span class="text-gray-400">Memory Usage:</span>
+			<div class="flex items-center gap-2">
+				<span class="text-white font-medium">{ strconv.FormatFloat(usedPercent, 'f', 2, 64) }%</span>
+				<div class="w-24 h-2 bg-gray-700 rounded-full overflow-hidden">
+					<div class="h-full bg-gradient-to-r from-green-500 to-yellow-500 transition-all duration-300" style={ "width: " + strconv.FormatFloat(usedPercent, 'f', 2, 64) + "%" }></div>
+				</div>
+			</div>
+		</div>
+	</div>
+}
+
+// Disk data component
+templ DiskData(total, used, free uint64, usedPercent float64) {
+	<div class="space-y-3">
+		<div class="flex justify-between items-center py-2 border-b border-gray-700">
+			<span class="text-gray-400">Total Disk Space:</span>
+			<span class="text-white font-medium">{ strconv.FormatUint(total, 10) } GB</span>
+		</div>
+		<div class="flex justify-between items-center py-2 border-b border-gray-700">
+			<span class="text-gray-400">Used Space:</span>
+			<span class="text-white font-medium">{ strconv.FormatUint(used, 10) } GB</span>
+		</div>
+		<div class="flex justify-between items-center py-2 border-b border-gray-700">
+			<span class="text-gray-400">Free Space:</span>
+			<span class="text-white font-medium">{ strconv.FormatUint(free, 10) } GB</span>
+		</div>
+		<div class="flex justify-between items-center py-2">
+			<span class="text-gray-400">Disk Usage:</span>
+			<div class="flex items-center gap-2">
+				<span class="text-white font-medium">{ strconv.FormatFloat(usedPercent, 'f', 2, 64) }%</span>
+				<div class="w-24 h-2 bg-gray-700 rounded-full overflow-hidden">
+					<div class="h-full bg-gradient-to-r from-green-500 via-yellow-500 to-red-500 transition-all duration-300" style={ "width: " + strconv.FormatFloat(usedPercent, 'f', 2, 64) + "%" }></div>
+				</div>
+			</div>
+		</div>
+	</div>
+}
+
+// CPU data component
+templ CPUData(modelName, family string, mhz float64, percentages []float64) {
+	<div class="space-y-4">
+		<div class="space-y-3 border-b border-gray-700 pb-4">
+			<div class="flex justify-between items-center py-2">
+				<span class="text-gray-400">Model Name:</span>
+				<span class="text-white font-medium text-sm">{ modelName }</span>
+			</div>
+			<div class="flex justify-between items-center py-2">
+				<span class="text-gray-400">Family:</span>
+				<span class="text-white font-medium">{ family }</span>
+			</div>
+			<div class="flex justify-between items-center py-2">
+				<span class="text-gray-400">Clock Speed:</span>
+				<span class="text-white font-medium">{ strconv.FormatFloat(mhz, 'f', 2, 64) } MHz</span>
+			</div>
+		</div>
+		<div>
+			<h3 class="text-lg font-semibold mb-3 text-gray-300">CPU Core Usage</h3>
+			<div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+				for idx, percent := range percentages {
+					<div class="flex items-center justify-between p-3 bg-gray-900 rounded-lg">
+						<span class="text-gray-400 text-sm">CPU [{ strconv.Itoa(idx) }]</span>
+						<div class="flex items-center gap-2">
+							<span class="text-white font-medium text-sm">{ strconv.FormatFloat(percent, 'f', 1, 64) }%</span>
+							<div class="w-16 h-2 bg-gray-700 rounded-full overflow-hidden">
+								<div
+									class="h-full transition-all duration-300"
+									class={ "bg-green-500", templ.KV("bg-yellow-500", percent > 50), templ.KV("bg-red-500", percent > 80) }
+									style={ "width: " + strconv.FormatFloat(percent, 'f', 1, 64) + "%" }
+								></div>
+							</div>
+						</div>
+					</div>
+				}
+			</div>
+		</div>
+	</div>
+}
+
+// Status update component
+templ StatusUpdate(timestamp string) {
+	<div class="flex items-center gap-2">
+		<div class="flex items-center gap-2">
+			<div class="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
+			<span class="text-green-400 font-medium">Live</span>
+		</div>
+		<span class="text-gray-400">•</span>
+		<span class="text-gray-400">Last updated: { timestamp }</span>
+	</div>
+}
